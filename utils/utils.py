@@ -130,3 +130,14 @@ def format_time(seconds):
     if f == '':
         f = '0ms'
     return f
+
+def adjust_lr(optimizer, net, epoch):
+    lr = 1e-2
+    if epoch < 40:
+        lr = lr
+    elif epoch < 80:
+        lr *= 0.1
+    else:
+        lr *= 0.01
+    for param_group in optimizer.param_groups:
+        param_group['lr'] = lr
