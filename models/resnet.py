@@ -99,9 +99,11 @@ class PreActBottleneck(nn.Module):
         # Key here is to add activation layer asap
         # There are multiple ways to build shortcut here
         # Note that it is not conventional use x as the input of shortcut
-        out = self.bn1(x)
+        # out = self.bn1(x)
+        out = F.relu(self.bn1(x))
         shortcut = self.shortcut(out) if hasattr(self, 'shortcut') else x
-        out = self.conv1(F.relu(out))
+        # out = self.conv1(F.relu(out))
+        out = self.conv1(out)
         out = self.conv2(F.relu(self.bn2(out)))
         out = self.conv3(F.relu(self.bn3(out)))
         out += shortcut
@@ -171,11 +173,17 @@ def preact_resnet164():
     return ResNet(PreActBottleneck, [18, 18, 18])
 
 def preact_resnet1001():
-    return ResNet(PreActBottleneck, [333, 333, 333])
+    return ResNet(PreActBottleneck, [111, 111, 111])
 
 def test():
     device = 'cuda'
-    net = resnet164()
+    net = preact_resnet164()
+    cnt= 0
+    for name, param in net.named_parameters():
+        if 'weight' in name and 'shortcut' not in name and 'bn' not in name:
+            cnt += 1
+            print(name)
+    print(cnt)
     net = net.to(device)
     y = net(torch.randn(1, 3, 32, 32).to(device))
     print(y.size())

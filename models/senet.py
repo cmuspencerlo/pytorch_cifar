@@ -55,12 +55,6 @@ class SENet(nn.Module):
                 self.in_planes = block.expansion * block_planes
             return nn.Sequential(*layers)
 
-        # No clue why we fail here for gpu version
-        # Maybe it goes wrong for this line:
-        # self.layers = []
-        # for num_block in num_block_list:
-        #     self.layers.append(_make_layer())
-        # Try a plain way to get around
         self.layer1 = _make_layer(block, 64, num_block_list[0], stride=1)
         self.layer2 = _make_layer(block, 128, num_block_list[1], stride=2)
         self.layer3 = _make_layer(block, 256, num_block_list[2], stride=2)
@@ -101,4 +95,4 @@ def test():
     y = net(torch.randn(1, 3, 32, 32).to(device))
     print(y.size())
 
-test()
+# test()

@@ -75,8 +75,21 @@ class MobileNetV2(nn.Module):
 def test():
     device = 'cuda'
     net = MobileNetV2()
+    cnt = 0
+    for name, param in net.named_parameters():
+        if 'weight' in name and 'shortcut' not in name and 'bn' not in name:
+            cnt += 1
+            # print(name)
+    # print(cnt)
     net = net.to(device)
     y = net(torch.randn(1, 3, 32, 32).to(device))
     print(y.size())
+    # net = torch.nn.DataParallel(net)
+    # reset params
+    for m in net.modules():
+        if 'Conv2d' in type(m).__name__:
+            print(type(m))
+            m.reset_parameters()
 
 # test()
+
