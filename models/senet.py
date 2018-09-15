@@ -2,6 +2,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from utils.counter import *
+from utils.utils import *
+
 class PreActBottleneck(nn.Module):
     expansion = 4
     def __init__(self, in_planes, block_planes, stride=1):
@@ -23,9 +26,9 @@ class PreActBottleneck(nn.Module):
         self.fc2 = nn.Conv2d(self.expansion*block_planes//16, self.expansion*block_planes, kernel_size=1, bias=True)
 
     def forward(self, x):
-        out = self.bn1(x)
+        out = F.relu(self.bn1(x))
         shortcut = self.shortcut(out) if hasattr(self, 'shortcut') else x
-        out = self.conv1(F.relu(out))
+        out = self.conv1(out)
         out = self.conv2(F.relu(self.bn2(out)))
         out = self.conv3(F.relu(self.bn3(out)))
 

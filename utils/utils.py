@@ -13,6 +13,8 @@ import torch.nn as nn
 import torch.nn.init as init
 import torch.optim as optim
 
+from utils.counter import *
+
 def gen_mean_std(dataset):
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=10000, shuffle=False, num_workers=2)
     train = iter(dataloader).next()[0]
@@ -143,22 +145,21 @@ def build_window(train_acc_window, train_acc):
 def save_net(epoch, net):
     if epoch == 0 or epoch + 1 >= WINDOW_SIZE:
         print('Saving...')
-        net_tag = type(net).__name__
         state = {
             'net': net.state_dict(),
         }
         if not os.path.isdir('checkpoint'):
             os.mkdir('checkpoint')
-        torch.save(state, './checkpoint/' + net_tag +'_ckpt.pkl')
+        torch.save(state, './checkpoint/' + str(id(net)) +'_ckpt.pkl')
         return True
     return False
 
-def load_net(net):
+def load_net(net, nid=0):
     # Load checkpoint.
     print('Loading net...')
-    net_tag = type(net).__name__
     assert os.path.isdir('checkpoint'), 'Error: no checkpoint directory found!'
-    checkpoint = torch.load('./checkpoint/' + net_tag +'_ckpt.pkl')
+    network_id = id(net) if nid == 0 else nid
+    checkpoint = torch.load('./checkpoint/' + str(network_id) +'_ckpt.pkl')
     net.load_state_dict(checkpoint['net'])
     optimizer = optim.SGD(net.parameters(), lr=0.1, momentum=0.9, weight_decay=5e-4)
     return optimizer
@@ -211,11 +212,14 @@ def build_params(net, args):
                 cnt += 1
     print('[Network] Total number of parameters : %.3f M' % (num_params / 1e6))
     print('[Network] Total layers: %d' % cnt)
+    cnt_ops, _ = measure_model(net, 32, 32)
+    print('[Network] Total ops : %.3f M' % (cnt_ops / 1e6))
 
     param_dict['lr'] = args.lr
     param_dict['adjust_lr'] = args.adjust_lr
     param_dict['layer_num'] = cnt
     param_dict['param_num'] = str(round(num_params / 1e6, 3)) + 'M'
+    param_dict['FLOPs'] = str(round(cnt_ops / 1e6, 3)) + 'M'
     param_dict['epochs'] = args.epochs
     param_dict['loops'] = args.loops
     param_dict['optimizer'] = args.optimizer

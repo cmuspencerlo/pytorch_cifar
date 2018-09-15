@@ -80,7 +80,6 @@ if __name__ == "__main__":
     parser.set_defaults(adjust_lr=True)
     parser.add_argument('--topk', default=1, type=int, metavar='K', help='top-k')
     parser.add_argument("--optimizer", default='SGD', type=str, help="optimizer options")
-
     args = parser.parse_args()
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -88,16 +87,17 @@ if __name__ == "__main__":
     print('==> Building model..')
     # reflection mechanism
     # net = LeNet()
-    net = densenet121()
-    net = net.to(device)
+    net = senet164()
 
     if args.tensorboard:
+        shadow_net = copy.deepcopy(net)
         writer = SummaryWriter()
-        writer.add_graph(net, torch.rand(1, 3, 32, 32).to(device))
-        net_tag = type(net).__name__
-        param_dict = build_params(net, args)
+        # writer.add_graph(net, torch.rand(1, 3, 32, 32))
+        net_tag = type(shadow_net).__name__
+        param_dict = build_params(shadow_net, args)
         add_params(writer, net_tag, param_dict)
 
+    net = net.to(device)
     if device == 'cuda':
         net = torch.nn.DataParallel(net)
         cudnn.benchmark = True
@@ -174,7 +174,7 @@ if __name__ == "__main__":
             # Test step.
             if (epoch + 1) % TEST_FREQUENCY == 0:
                 test_net = copy.deepcopy(net)
-                load_net(test_net)
+                load_net(test_net, nid=id(net))
                 test_net.eval()
                 correct = 0
                 total = 0
